@@ -7,6 +7,7 @@ use DBConnection;
 require_once __DIR__."./../serviceauthentication/serviceauthentication.php";
 require_once __DIR__."./../serviceauthentication/AccountInformationException.php";
 require_once __DIR__."./../serviceauthentication/DBConnection.php";
+require_once __DIR__."./../commonConstant.php";
 
 class DepositService
 {
@@ -19,13 +20,13 @@ class DepositService
     public function deposit(string $amount):array
     {
         $response = array("isError" => true);
-        if(!preg_match('/^[0-9]*$/',$this->acctNum)){
+        if(!preg_match(REGEX_ALL_NUMBER,$this->acctNum)){
             $response["message"] = "Account no. must be numeric!";
         }
         elseif(strlen($this->acctNum) != 10){
             $response["message"] = "Account no. must have 10 digit!";
         }
-        elseif(!preg_match('/^[0-9]*$/',$amount)){
+        elseif(!preg_match(REGEX_ALL_NUMBER,$amount)){
             $response["message"] = "Amount must be numeric!";
         }
         elseif((int)$amount <= 0){

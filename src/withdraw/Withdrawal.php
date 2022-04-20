@@ -1,11 +1,10 @@
 <?php namespace Operation;
 
 require_once __DIR__.'./../serviceauthentication/DBConnection.php';
-// require_once 'StubWithdrawal.php';
+require_once __DIR__."./../commonConstant.php";
 
 use DBConnection;
 use AccountInformationException;
-// use Stub\StubWithdrawal;
 
 final class Withdrawal {
     private $accNo;
@@ -18,13 +17,13 @@ final class Withdrawal {
         $response = array("isError" => true);
         try{
 
-            if(!preg_match('/^[0-9]*$/',$this->accNo)){
+            if(!preg_match(REGEX_ALL_NUMBER,$this->accNo)){
                 $response["message"] = "หมายเลขบัญชีต้องเป็นตัวเลขเท่านั้น";
             }
             elseif(!preg_match('/^[0-9\-\.]*$/',$amount)){
                 $response["message"] = "จำนวนเงินถอนต้องเป็นตัวเลขเท่านั้น";
             }
-            elseif(preg_match('/^.*(\\.[0-9]+)$/',$amount)){
+            elseif(preg_match(REGEX_NO_DECIMAL,$amount)){
                 $response["message"] = "จำนวนเงินถอนต้องเป็นจำนวนเต็มเท่านั้น";
             }
             elseif($amount <= 0){
@@ -37,25 +36,10 @@ final class Withdrawal {
                 $response["message"] = "ยอดเงินที่ต้องการถอนต้องไม่เกิน 50,000 บาทต่อรายการ";
             }
             else{
-                //Call Stub
-            //    $response = StubWithdrawal::serviceAuthentication($this->accNo);
-            //    if(!$response["isError"]){
-            //        $response = StubWithdrawal::doWithdraw($this->accNo, $amount);
-            //        $isSuccess = StubWithdrawal::saveTransaction($this->accNo, $amount);
-            //        if($isSuccess) {
-            //            return $response;
-            //        }
-            //    }else {
-            //        return $response;
-            //    }
-
-                //Real Code
                 $response = Withdrawal::doWithdraw($this->accNo, $amount);
-                if(!$response["isError"]) {
-                   if(!DBConnection::saveTransaction($this->accNo, $response["accBalance"])) {
-                       $response["message"] = "ไม่สามารถปรับปรุงยอดเงินได้";
-                       $response["isError"] = true;
-                   }
+                if(!$response["isError"] && !DBConnection::saveTransaction($this->accNo, $response["accBalance"])) {
+                    $response["message"] = "ไม่สามารถปรับปรุงยอดเงินได้";
+                    $response["isError"] = true;
                 }
             }
         }

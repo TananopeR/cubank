@@ -5,6 +5,8 @@ require_once __DIR__."./../../src/withdraw/Withdrawal.php";
 require_once __DIR__."./../serviceauthentication/serviceauthentication.php";
 require_once __DIR__."./../serviceauthentication/AccountInformationException.php";
 require_once __DIR__."./../serviceauthentication/DBConnection.php";
+require_once __DIR__."./../commonConstant.php";
+
 use DBConnection;
 use ServiceAuthentication;
 use Operation\DepositService;
@@ -22,30 +24,19 @@ class Transfer{
     public function doTransfer(string $targetNumber, string $amount){
         $response["accBalance"] = 0;
         $response["isError"] = true;
-        if (!preg_match('/^[0-9]*$/',$this->srcNumber) || !preg_match('/^[0-9]*$/',$targetNumber)) {
-            $response["message"] = "หมายเลขบัญชีต้องเป็นตัวเลขเท่านั้น";
-        } elseif (!preg_match('/^[0-9]*$/',$amount)) {
-            $response["message"] = "จำนวนเงินต้องเป็นตัวเลขเท่านั้น";
-        } elseif (strlen($this->srcNumber) != 10 || strlen($targetNumber) != 10) {
-            $response["message"] = "หมายเลขบัญชีต้องมีจำนวน 10 หลัก";
-        } elseif ((int)$amount <=0) {
-            $response["message"] = "ยอดการโอนต้องมากกว่า 0 บาท";
-        } elseif ((int)$amount > 9999999) {
-            $response["message"] = "ยอดการโอนต้องไม่มากกว่า 9,999,999 บาท";
-        } elseif ($this->srcNumber == $targetNumber) {
-            $response["message"] = "ไม่สามารถโอนไปบัญชีตัวเองได้";
-        } else {
-            try
-            {
+        $response["message"] = transferVerification($targetNumber, $amount);
+
+        if($response["message"] ==null){
+            try{
                 $srcAccount = $this->accountAuthenticationProvider($this->srcNumber);
                 $desAccount = $this->accountAuthenticationProvider($targetNumber);
 
                 if ($srcAccount['accBalance'] - (int)$amount < 0) {
                     $response["message"] = "คุณมียอดเงินในบัญชีไม่เพียงพอ";
-                } else {
+                }else{
                     $withdrawResult = $this->withdraw($srcAccount['accNo'], $amount);
                     $depositResult = $this->deposit($desAccount['accNo'], $amount);
-
+        
                     if ($depositResult['isError'] || $withdrawResult['isError']) {
                         $response['message'] = "ดำเนินการไม่สำเร็จ";
                     } else {
@@ -53,15 +44,35 @@ class Transfer{
                         $response['accBalance'] = $withdrawResult['accBalance'];
                         $response['message'] = "";
                     }
-                }     
-            } catch(AccountInformationException $e)
-            {
+                }   
+            } catch(AccountInformationException $e){
                 $response["message"] = $e->getMessage();
-            }    
+            }
         }
 
         return $response;
     }
+
+    private function transferVerification(string $targetNumber, string $amount){
+        $message;
+        if (!preg_match(REGEX_ALL_NUMBER,$this->srcNumber) || !preg_match(REGEX_ALL_NUMBER,$targetNumber)) {
+            $message = "หมายเลขบัญชีต้องเป็นตัวเลขเท่านั้น";
+        } elseif (!preg_match(REGEX_ALL_NUMBER,$amount)) {
+            $message = "จำนวนเงินต้องเป็นตัวเลขเท่านั้น";
+        } elseif (strlen($this->srcNumber) != 10 || strlen($targetNumber) != 10) {
+            $message = "หมายเลขบัญชีต้องมีจำนวน 10 หลัก";
+        } elseif ((int)$amount <=0) {
+            $message = "ยอดการโอนต้องมากกว่า 0 บาท";
+        } elseif ((int)$amount > 9999999) {
+            $message = "ยอดการโอนต้องไม่มากกว่า 9,999,999 บาท";
+        } elseif ($this->srcNumber == $targetNumber) {
+            $message = "ไม่สามารถโอนไปบัญชีตัวเองได้";
+        } else {
+              
+        }
+        return $message;
+    }
+
     public function accountAuthenticationProvider(string $acctNum) : array
     {
         return  ServiceAuthentication::accountAuthenticationProvider($acctNum);
