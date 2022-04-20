@@ -24,7 +24,7 @@ class Transfer{
     public function doTransfer(string $targetNumber, string $amount){
         $response["accBalance"] = 0;
         $response["isError"] = true;
-        $response["message"] = transferVerification($targetNumber, $amount);
+        $response["message"] = $this->transferVerification($targetNumber, $amount);
 
         if($response["message"] ==null){
             try{
