@@ -54,7 +54,7 @@ class Transfer{
     }
 
     private function transferVerification(string $targetNumber, string $amount){
-        $message;
+        $message=null;
         if (!preg_match(REGEX_ALL_NUMBER,$this->srcNumber) || !preg_match(REGEX_ALL_NUMBER,$targetNumber)) {
             $message = "หมายเลขบัญชีต้องเป็นตัวเลขเท่านั้น";
         } elseif (!preg_match(REGEX_ALL_NUMBER,$amount)) {
@@ -67,8 +67,6 @@ class Transfer{
             $message = "ยอดการโอนต้องไม่มากกว่า 9,999,999 บาท";
         } elseif ($this->srcNumber == $targetNumber) {
             $message = "ไม่สามารถโอนไปบัญชีตัวเองได้";
-        } else {
-              
         }
         return $message;
     }
