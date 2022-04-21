@@ -15,50 +15,41 @@ final class Withdrawal {
     }
 
     public function withdraw(string $amount) {
-        $response = array("isError" => true);
-        try{
-
-            if(!preg_match(REGEX_ALL_NUMBER,$this->accNo)){
-                $response["message"] = "หมายเลขบัญชีต้องเป็นตัวเลขเท่านั้น";
+        $response['isError'] = false;
+        $response['message'] = '';
+        try {
+            if(!preg_match(REGEX_ALL_NUMBER,$this->accNo)) throw new Exception('หมายเลขบัญชีต้องเป็นตัวเลขเท่านั้น');
+            elseif(!preg_match('/^[0-9\-\.]*$/',$amount)) throw new Exception('จำนวนเงินถอนต้องเป็นตัวเลขเท่านั้น');
+            elseif(preg_match(REGEX_NO_DECIMAL,$amount)) throw new Exception('จำนวนเงินถอนต้องเป็นจำนวนเต็มเท่านั้น');
+            elseif($amount <= 0) throw new Exception('จำนวนเงินถอนต้องมากกว่า 0 บาท');
+            elseif(strlen($this->accNo) != 10) throw new Exception('หมายเลขบัญชีต้องมีครบทั้ง 10 หลัก');
+            elseif($amount > 50000) throw new Exception('ยอดเงินที่ต้องการถอนต้องไม่เกิน 50,000 บาทต่อรายการ');
+            else {
+                $response = $this->doWithdraw($this->accNo, $amount);
+                $this->saveTransaction($this->accNo, $response["accBalance"]);
             }
-            elseif(!preg_match('/^[0-9\-\.]*$/',$amount)){
-                $response["message"] = "จำนวนเงินถอนต้องเป็นตัวเลขเท่านั้น";
-            }
-            elseif(preg_match(REGEX_NO_DECIMAL,$amount)){
-                $response["message"] = "จำนวนเงินถอนต้องเป็นจำนวนเต็มเท่านั้น";
-            }
-            elseif($amount <= 0){
-                $response["message"] = "จำนวนเงินถอนต้องมากกว่า 0 บาท";
-            }
-            elseif(strlen($this->accNo) != 10){
-                $response["message"] = "หมายเลขบัญชีต้องมีครบทั้ง 10 หลัก";
-            }
-             elseif($amount > 50000){
-                $response["message"] = "ยอดเงินที่ต้องการถอนต้องไม่เกิน 50,000 บาทต่อรายการ";
-            }
-            else{
-                $response = Withdrawal::doWithdraw($this->accNo, $amount);
-                if(!$response["isError"] && !DBConnection::saveTransaction($this->accNo, $response["accBalance"])) {
-                    $response["message"] = "ไม่สามารถปรับปรุงยอดเงินได้";
-                    $response["isError"] = true;
-                }
-            }
+        } catch (Exception $e) {
+            $response['isError'] = true;
+            $response['message'] = $e->getMesage();
         }
-        catch(Exception $e){
-            $response["message"] = $e->getMessage(); //////////
-        } catch (AccountInformationException $e) {
-            $response["message"] = $e->getMessage(); //////////
-        }
-
         return $response;
     }
-
     private function doWithdraw($accNo, $amount) {
         $auth = DBConnection::accountInformationProvider($this->accNo);
         if ($auth["accBalance"] - $amount >= 0) {
-            return array("accNo" => $accNo, "accName" => $auth["accName"], "accBalance" => $auth["accBalance"] - $amount, "isError" => false);
-        }else {
-            return array("isError" => true, "message" => "ยอดเงินในบัญชีไม่เพียงพอ");
+            return array(
+                "accNo" => $accNo,
+                "accName" => $auth["accName"],
+                "accBalance" => $auth["accBalance"] - $amount,
+                "isError" => false
+            );
+        } else throw new Exception('ยอดเงินในบัญชีไม่เพียงพอ');
+    }
+    private function saveTransaction( string $accNo, string $updatedBalance ) : bool {
+        try {
+            return DBConnection::saveTransaction( $accNo, $updatedBalance );
+        } catch (Exception $e) {
+            throw new Exception('ไม่สามารถปรับปรุงยอดเงินได้');
         }
     }
 }

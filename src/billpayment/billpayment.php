@@ -3,7 +3,7 @@
 use AccountInformationException;
 use ServiceAuthentication;
 use DBConnection;
-use Error;
+use Exception;
 
 require_once __DIR__.'./../serviceauthentication/serviceauthentication.php';
 require_once __DIR__.'./../serviceauthentication/AccountInformationException.php';
@@ -18,7 +18,7 @@ class BillPayment {
     }
 
     public function getAccountDetail( string $accNo ) {
-        if ( strlen( $accNo ) != 10 ) throw new Error('Invalid Account No');
+        if ( strlen( $accNo ) != 10 ) throw new Exception('Invalid Account No');
         return ServiceAuthentication::accountAuthenticationProvider( $accNo );
     }
 
@@ -59,8 +59,10 @@ class BillPayment {
     }
 
     public function pay( string $bill_type ) {
+        $response['isError'] = false;
+        $response['message'] = '';
         try {
-            if ( $bill_type == null || $bill_type == '' ) throw new Error('Invalid bill type');
+            if ( $bill_type == null || $bill_type == '' ) throw new Exception('Invalid bill type');
             
             $arrayAccount = $this->getAccountDetail( $this->accNo );
 
@@ -68,7 +70,7 @@ class BillPayment {
             if ( $bill_type == 'waterCharge' ) $accChargeType = 'accWaterCharge';
             else if ( $bill_type == 'electricCharge' ) $accChargeType = 'accElectricCharge';
 
-            if ( $arrayAccount['accBalance'] < $arrayAccount[$accChargeType] ) throw new Error('ยอดเงินในบัญชีไม่เพียงพอ');
+            if ( $arrayAccount['accBalance'] < $arrayAccount[$accChargeType] ) throw new Exception('ยอดเงินในบัญชีไม่เพียงพอ');
             else {
                 $updatedBalance = $arrayAccount['accBalance'] - $arrayAccount[$accChargeType];
                 $this->saveTransaction( $this->accNo, $updatedBalance );
@@ -77,11 +79,10 @@ class BillPayment {
                 $response['message'] = '';
             }
 
-        } catch (Error $e) {
+        } catch (Exception $e) {
             $response['isError'] = true;
             $response['message'] = $e->getMessage();
-        } finally {
-            return $response
         }
+        return $response;
     }
 }
