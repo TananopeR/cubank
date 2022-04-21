@@ -51,7 +51,9 @@ final class Withdrawal {
                 "accBalance" => $auth["accBalance"] - $amount,
                 "isError" => false
             );
-        } else throw new WithdrawalException('ยอดเงินในบัญชีไม่เพียงพอ');
+        } else {
+            throw new WithdrawalException('ยอดเงินในบัญชีไม่เพียงพอ');
+        }
     }
     private function saveTransaction( string $accNo, string $updatedBalance ) : bool {
         try {
