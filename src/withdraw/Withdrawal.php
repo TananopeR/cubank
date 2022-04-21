@@ -5,6 +5,7 @@ require_once __DIR__."./../commonConstant.php";
 
 use DBConnection;
 use AccountInformationException;
+use Exception;
 
 final class Withdrawal {
     private $accNo;
