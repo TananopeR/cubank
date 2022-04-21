@@ -1,10 +1,12 @@
 <?php namespace Operation;
 
-require_once __DIR__.'./../serviceauthentication/DBConnection.php';
 require_once __DIR__."./../commonConstant.php";
+require_once __DIR__.'./../serviceauthentication/DBConnection.php';
+require_once __DIR__.'./../WithdrawalException.php';
 
 use DBConnection;
 use AccountInformationException;
+use WithdrawalException;
 use Exception;
 
 final class Withdrawal {
@@ -19,17 +21,17 @@ final class Withdrawal {
         $response['message'] = '';
         try {
             if(!preg_match(REGEX_ALL_NUMBER,$this->accNo)) {
-                throw new Exception('หมายเลขบัญชีต้องเป็นตัวเลขเท่านั้น');
+                throw new WithdrawalException('หมายเลขบัญชีต้องเป็นตัวเลขเท่านั้น');
             } elseif(!preg_match('/^[0-9\-\.]*$/',$amount)) {
-                throw new Exception('จำนวนเงินถอนต้องเป็นตัวเลขเท่านั้น');
+                throw new WithdrawalException('จำนวนเงินถอนต้องเป็นตัวเลขเท่านั้น');
             } elseif(preg_match(REGEX_NO_DECIMAL,$amount)) {
-                throw new Exception('จำนวนเงินถอนต้องเป็นจำนวนเต็มเท่านั้น');
+                throw new WithdrawalException('จำนวนเงินถอนต้องเป็นจำนวนเต็มเท่านั้น');
             } elseif($amount <= 0) {
-                throw new Exception('จำนวนเงินถอนต้องมากกว่า 0 บาท');
+                throw new WithdrawalException('จำนวนเงินถอนต้องมากกว่า 0 บาท');
             } elseif(strlen($this->accNo) != 10) {
-                throw new Exception('หมายเลขบัญชีต้องมีครบทั้ง 10 หลัก');
+                throw new WithdrawalException('หมายเลขบัญชีต้องมีครบทั้ง 10 หลัก');
             } elseif($amount > 50000) {
-                throw new Exception('ยอดเงินที่ต้องการถอนต้องไม่เกิน 50,000 บาทต่อรายการ');
+                throw new WithdrawalException('ยอดเงินที่ต้องการถอนต้องไม่เกิน 50,000 บาทต่อรายการ');
             } else {
                 $response = $this->doWithdraw($this->accNo, $amount);
                 $this->saveTransaction($this->accNo, $response["accBalance"]);
@@ -49,13 +51,13 @@ final class Withdrawal {
                 "accBalance" => $auth["accBalance"] - $amount,
                 "isError" => false
             );
-        } else throw new Exception('ยอดเงินในบัญชีไม่เพียงพอ');
+        } else throw new WithdrawalException('ยอดเงินในบัญชีไม่เพียงพอ');
     }
     private function saveTransaction( string $accNo, string $updatedBalance ) : bool {
         try {
             return DBConnection::saveTransaction( $accNo, $updatedBalance );
         } catch (Exception $e) {
-            throw new Exception('ไม่สามารถปรับปรุงยอดเงินได้');
+            throw new WithdrawalException('ไม่สามารถปรับปรุงยอดเงินได้');
         }
     }
 }

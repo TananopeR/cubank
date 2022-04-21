@@ -1,13 +1,15 @@
 <?php namespace Operation;
 
+require_once __DIR__.'./../serviceauthentication/serviceauthentication.php';
+require_once __DIR__.'./../serviceauthentication/AccountInformationException.php';
+require_once __DIR__.'./../serviceauthentication/DBConnection.php';
+require_once __DIR__.'./../BillPaymentException.php';
+
+use BillPaymentException;
 use AccountInformationException;
 use ServiceAuthentication;
 use DBConnection;
 use Exception;
-
-require_once __DIR__.'./../serviceauthentication/serviceauthentication.php';
-require_once __DIR__.'./../serviceauthentication/AccountInformationException.php';
-require_once __DIR__.'./../serviceauthentication/DBConnection.php';
 
 class BillPayment {
 
@@ -19,7 +21,7 @@ class BillPayment {
 
     public function getAccountDetail( string $accNo ) {
         if ( strlen( $accNo ) != 10 ) {
-            throw new Exception('Invalid Account No');
+            throw new BillPaymentException('Invalid Account No');
         }
         return ServiceAuthentication::accountAuthenticationProvider( $accNo );
     }
@@ -39,25 +41,16 @@ class BillPayment {
     }
 
     public function getBill() {
-
+        $response['isError'] = false;
+        $response['message'] = '';
         try {
             $dataAccount = $this->getAccountDetail( $this->accNo );
-
-            if($dataAccount == 'ERROR'){
-                $response['message'] = 'Invalid Account No';
-                $response['isError'] = true ;
-              return $response;
-            }
             $response = $dataAccount;
-            $response['message'] = '';
-            $response['isError'] = false;
         } catch( Exception $e ) {
-            $response['message'] = 'Cannot get bill';
             $response['isError'] = true;
+            $response['message'] = 'Cannot get bill';
         }
-
         return $response;
-
     }
 
     public function pay( string $bill_type ) {
@@ -65,7 +58,7 @@ class BillPayment {
         $response['message'] = '';
         try {
             if ( $bill_type == null || $bill_type == '' ) {
-                throw new Exception('Invalid bill type');
+                throw new BillPaymentException('Invalid bill type');
             }
             
             $arrayAccount = $this->getAccountDetail( $this->accNo );
@@ -78,7 +71,7 @@ class BillPayment {
             }
 
             if ( $arrayAccount['accBalance'] < $arrayAccount[$accChargeType] ) {
-                throw new Exception('ยอดเงินในบัญชีไม่เพียงพอ');
+                throw new BillPaymentException('ยอดเงินในบัญชีไม่เพียงพอ');
             } else {
                 $updatedBalance = $arrayAccount['accBalance'] - $arrayAccount[$accChargeType];
                 $this->saveTransaction( $this->accNo, $updatedBalance );
