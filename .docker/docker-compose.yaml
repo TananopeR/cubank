@@ -1,13 +1,12 @@
-version: '3.1'
+version: '3.8'
 
 services:
   db:
+    container_name: db
     image: mariadb:10.3
     restart: always
-    container_name: database
     environment:
       MYSQL_ROOT_PASSWORD: root
-
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
     restart: always
@@ -23,7 +22,7 @@ services:
     build:
       context: .
       target: development
-    volumes:
-      - /var/www/html
     ports:
       - 3000:80
+    depends_on:
+      - db
