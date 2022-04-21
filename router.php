@@ -1,5 +1,4 @@
 <?php
-//include 'view/login.html';
 
     $requestURI = $_SERVER["REQUEST_URI"];
     $filePath = __DIR__  . $requestURI;
@@ -11,7 +10,6 @@
       }
     }
     $session = isset($_COOKIE["authentication"])?true:false;
-    //echo "what?";
     if($session){
       if($requestURI == '/deposit') {
       	include 'view/deposit.html';

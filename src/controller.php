@@ -3,7 +3,6 @@
 define("PHP_ENV",false);
 ini_set("display_errors",PHP_ENV?"ON":"Off");
 
-//require_once "../vendor/autoload.php";
 require_once "authentication/authentication.php";
 require_once "withdraw/Withdrawal.php";
 require_once "deposit/DepositService.php";
