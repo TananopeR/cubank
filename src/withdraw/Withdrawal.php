@@ -18,13 +18,19 @@ final class Withdrawal {
         $response['isError'] = false;
         $response['message'] = '';
         try {
-            if(!preg_match(REGEX_ALL_NUMBER,$this->accNo)) throw new Exception('หมายเลขบัญชีต้องเป็นตัวเลขเท่านั้น');
-            elseif(!preg_match('/^[0-9\-\.]*$/',$amount)) throw new Exception('จำนวนเงินถอนต้องเป็นตัวเลขเท่านั้น');
-            elseif(preg_match(REGEX_NO_DECIMAL,$amount)) throw new Exception('จำนวนเงินถอนต้องเป็นจำนวนเต็มเท่านั้น');
-            elseif($amount <= 0) throw new Exception('จำนวนเงินถอนต้องมากกว่า 0 บาท');
-            elseif(strlen($this->accNo) != 10) throw new Exception('หมายเลขบัญชีต้องมีครบทั้ง 10 หลัก');
-            elseif($amount > 50000) throw new Exception('ยอดเงินที่ต้องการถอนต้องไม่เกิน 50,000 บาทต่อรายการ');
-            else {
+            if(!preg_match(REGEX_ALL_NUMBER,$this->accNo)) {
+                throw new Exception('หมายเลขบัญชีต้องเป็นตัวเลขเท่านั้น');
+            } elseif(!preg_match('/^[0-9\-\.]*$/',$amount)) {
+                throw new Exception('จำนวนเงินถอนต้องเป็นตัวเลขเท่านั้น');
+            } elseif(preg_match(REGEX_NO_DECIMAL,$amount)) {
+                throw new Exception('จำนวนเงินถอนต้องเป็นจำนวนเต็มเท่านั้น');
+            } elseif($amount <= 0) {
+                throw new Exception('จำนวนเงินถอนต้องมากกว่า 0 บาท');
+            } elseif(strlen($this->accNo) != 10) {
+                throw new Exception('หมายเลขบัญชีต้องมีครบทั้ง 10 หลัก');
+            } elseif($amount > 50000) {
+                throw new Exception('ยอดเงินที่ต้องการถอนต้องไม่เกิน 50,000 บาทต่อรายการ');
+            } else {
                 $response = $this->doWithdraw($this->accNo, $amount);
                 $this->saveTransaction($this->accNo, $response["accBalance"]);
             }

@@ -18,7 +18,9 @@ class BillPayment {
     }
 
     public function getAccountDetail( string $accNo ) {
-        if ( strlen( $accNo ) != 10 ) throw new Exception('Invalid Account No');
+        if ( strlen( $accNo ) != 10 ) {
+            throw new Exception('Invalid Account No');
+        }
         return ServiceAuthentication::accountAuthenticationProvider( $accNo );
     }
 
@@ -62,16 +64,22 @@ class BillPayment {
         $response['isError'] = false;
         $response['message'] = '';
         try {
-            if ( $bill_type == null || $bill_type == '' ) throw new Exception('Invalid bill type');
+            if ( $bill_type == null || $bill_type == '' ) {
+                throw new Exception('Invalid bill type');
+            }
             
             $arrayAccount = $this->getAccountDetail( $this->accNo );
 
             $accChargeType = 'accPhoneCharge';
-            if ( $bill_type == 'waterCharge' ) $accChargeType = 'accWaterCharge';
-            else if ( $bill_type == 'electricCharge' ) $accChargeType = 'accElectricCharge';
+            if ( $bill_type == 'waterCharge' ) {
+                $accChargeType = 'accWaterCharge';
+            } else if ( $bill_type == 'electricCharge' ) {
+                $accChargeType = 'accElectricCharge';
+            }
 
-            if ( $arrayAccount['accBalance'] < $arrayAccount[$accChargeType] ) throw new Exception('ยอดเงินในบัญชีไม่เพียงพอ');
-            else {
+            if ( $arrayAccount['accBalance'] < $arrayAccount[$accChargeType] ) {
+                throw new Exception('ยอดเงินในบัญชีไม่เพียงพอ');
+            } else {
                 $updatedBalance = $arrayAccount['accBalance'] - $arrayAccount[$accChargeType];
                 $this->saveTransaction( $this->accNo, $updatedBalance );
                 $response = $this->getAccountDetail( $this->accNo );
