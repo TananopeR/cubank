@@ -3,12 +3,13 @@
 use AccountInformationException;
 use ServiceAuthentication;
 use DBConnection;
+use Error;
 
 require_once __DIR__.'./../serviceauthentication/serviceauthentication.php';
 require_once __DIR__.'./../serviceauthentication/AccountInformationException.php';
 require_once __DIR__.'./../serviceauthentication/DBConnection.php';
 
-class billpayment {
+class BillPayment {
 
     private $accNo = '';
 
@@ -17,9 +18,7 @@ class billpayment {
     }
 
     public function getAccountDetail( string $accNo ) {
-        if ( strlen( $accNo ) != 10 ) {
-            return 'ERROR';
-        }
+        if ( strlen( $accNo ) != 10 ) throw new Error('Invalid Account No');
         return ServiceAuthentication::accountAuthenticationProvider( $accNo );
     }
 
@@ -37,7 +36,7 @@ class billpayment {
         }
     }
 
-    public function getBill( string $bill_type  ) {
+    public function getBill() {
 
         try {
             $dataAccount = $this->getAccountDetail( $this->accNo );
@@ -60,49 +59,29 @@ class billpayment {
     }
 
     public function pay( string $bill_type ) {
-        if ( $bill_type == null || $bill_type == '' ) {
-            $response['isError'] = true;
-            $response['message'] = 'Invalid bill type';
-            return $response;
-        } else {
+        try {
+            if ( $bill_type == null || $bill_type == '' ) throw new Error('Invalid bill type');
+            
             $arrayAccount = $this->getAccountDetail( $this->accNo );
 
-            if($arrayAccount == 'ERROR'){
-                $response['message'] = 'Invalid Account No';
-                $response['isError'] = true ;
-              return $response;
-            }
+            $accChargeType = 'accPhoneCharge';
+            if ( $bill_type == 'waterCharge' ) $accChargeType = 'accWaterCharge';
+            else if ( $bill_type == 'electricCharge' ) $accChargeType = 'accElectricCharge';
 
-            $accChargeType = '';
-
-            if ( $bill_type == 'waterCharge' ) {
-                $accChargeType = 'accWaterCharge';
-            } else if ( $bill_type == 'electricCharge' ) {
-                $accChargeType = 'accElectricCharge';
-            } else {
-                $accChargeType = 'accPhoneCharge';
-            }
-
-            if ( ( $arrayAccount['accBalance'] < $arrayAccount[$accChargeType] ) ) {
-                $response['isError'] = true;
-                $response['message'] = 'ยอดเงินในบัญชีไม่เพียงพอ';
-                return $response;
-            }
-            if ( $arrayAccount['accBalance'] >= $arrayAccount[$accChargeType] ) {
+            if ( $arrayAccount['accBalance'] < $arrayAccount[$accChargeType] ) throw new Error('ยอดเงินในบัญชีไม่เพียงพอ');
+            else {
                 $updatedBalance = $arrayAccount['accBalance'] - $arrayAccount[$accChargeType];
-                try {
-                    $this->saveTransaction( $this->accNo, $updatedBalance );
-                    // $this->saveChargeTransaction( $this->accNo, $bill_type );
-
-                    $response = $this->getAccountDetail( $this->accNo );
-                    $response['isError'] = false;
-                    $response['message'] = '';
-                } catch( Error $e ) {
-                    $response['isError'] = true;
-                    $response['message'] = 'Unknown error occurs in BillPayment';
-                }
+                $this->saveTransaction( $this->accNo, $updatedBalance );
+                $response = $this->getAccountDetail( $this->accNo );
+                $response['isError'] = false;
+                $response['message'] = '';
             }
-            return $response;
+
+        } catch (Error $e) {
+            $response['isError'] = true;
+            $response['message'] = $e->getMessage();
+        } finally {
+            return $response
         }
     }
 }
