@@ -49,7 +49,7 @@ class BillPayment {
             $response = $dataAccount;
             $response['message'] = '';
             $response['isError'] = false;
-        } catch( Error $e ) {
+        } catch( Exception $e ) {
             $response['message'] = 'Cannot get bill';
             $response['isError'] = true;
         }
