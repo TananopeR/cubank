@@ -4,6 +4,9 @@ require_once __DIR__.'./../serviceauthentication/DBConnection.php';
 
 use DBConnection;
 use AccountInformationException;
+use Exception;
+use Error;
+
 class Authentication{
     private $acctNum,$pin;
 
@@ -14,7 +17,7 @@ class Authentication{
 
     public function login(){      
         $response = array("isError" => true);
-        if(!preg_match('/^[0-9]*$/',$this->acctNum) || !preg_match('/^[0-9]*$/',$this->pin)){
+        if(!preg_match('/^\d*$/',$this->acctNum) || !preg_match('/^\d*$/',$this->pin)){
           $response["message"] = "Account no. and PIN must be numeric!";
         }
         elseif(strlen($this->acctNum) != 10){
